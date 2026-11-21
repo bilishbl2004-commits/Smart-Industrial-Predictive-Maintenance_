@@ -429,7 +429,141 @@ if st.button(
             use_container_width=True,
             hide_index=True
         )
+        # ====================================
+        # ADDITIONAL VISUALIZATIONS
+        # ====================================
 
+        st.divider()
+
+        st.subheader("📊 Feature Contribution Analysis")
+
+        st.write(
+            "This chart shows how each feature influences "
+            "the model's machine failure output."
+        )
+
+        # Top 5 SHAP contributions
+        chart_data = top_features.copy()
+
+        chart_data["Feature"] = (
+            chart_data["Feature"].str.replace(
+                "cat__", "", regex=False
+            ).str.replace(
+                "num__", "", regex=False
+            )
+        )
+
+        chart_data = chart_data.sort_values(
+            "SHAP Value",
+            ascending=True
+        )
+
+        # Horizontal bar chart
+        fig, ax = plt.subplots(figsize=(10, 5))
+
+        bar_colors = [
+            "red" if value > 0 else "green"
+            for value in chart_data["SHAP Value"]
+        ]
+
+        ax.barh(
+            chart_data["Feature"],
+            chart_data["SHAP Value"],
+            color=bar_colors
+        )
+
+        ax.axvline(
+            x=0,
+            color="black",
+            linewidth=1
+        )
+
+        ax.set_xlabel("SHAP Contribution")
+        ax.set_ylabel("Machine Features")
+        ax.set_title("Features Influencing Machine Failure")
+
+        ax.grid(axis="x", linestyle="--", alpha=0.3)
+
+        st.pyplot(fig)
+        plt.close(fig)
+
+        st.caption(
+            "Red = pushes model output towards failure. "
+            "Green = pushes model output away from failure."
+        )
+
+        # ====================================
+        # MACHINE INPUT FEATURE COMPARISON
+        # ====================================
+
+        st.subheader("📈 Machine Operating Parameters")
+
+        st.write(
+            "Compare the numerical operating parameters "
+            "entered for the current machine."
+        )
+
+        feature_values = pd.DataFrame({
+            "Feature": [
+                "Air Temperature",
+                "Process Temperature",
+                "Rotational Speed",
+                "Torque",
+                "Tool Wear",
+                "Temperature Difference"
+            ],
+
+            "Reading": [
+                air_temp,
+                process_temp,
+                rotational_speed,
+                torque,
+                tool_wear,
+                temperature_difference
+            ],
+
+            "Unit": [
+                "K",
+                "K",
+                "rpm",
+                "Nm",
+                "min",
+                "K"
+            ]
+        })
+
+        # Display readings as a table
+        st.dataframe(
+            feature_values,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # Horizontal line chart
+        fig, ax = plt.subplots(figsize=(10, 5))
+
+        ax.plot(
+            feature_values["Feature"],
+            feature_values["Reading"],
+            marker="o",
+            linewidth=2
+        )
+
+        ax.set_title("Current Machine Feature Readings")
+        ax.set_xlabel("Machine Features")
+        ax.set_ylabel("Reading (values in their respective units)")
+
+        ax.tick_params(
+            axis="x",
+            rotation=30
+        )
+
+        ax.grid(True, linestyle="--", alpha=0.3)
+
+        plt.tight_layout()
+
+        st.pyplot(fig)
+        plt.close(fig)
 
         # ----------------------------
         # INTERPRETATION
